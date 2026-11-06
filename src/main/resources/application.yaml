@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: iec-shipping-api
+server:
+  port: 8124
+carrier-account:
+  ups:
+    carrier: ${UPS_CARRIER:UPS}
+    endpoint: ${UPS_ENDPOINT:https://onlinetools.ups.com/api/rating/v2403/rate}
+    clientId: ${UPS_CLIENT_ID:Your_UPS_CLIENT_ID}
+    clientSecret: ${UPS_CLIENT_SECRET:Your_UPS_CLIENT_SECRET}
+    accountNumber: ${UPS_ACCOUNT_NUMBER:Your_UPS_ACCOUNT_NUMBER}
+  canada-post:
+    carrier: ${CANADA_POST_CARRIER:Canada Post}
+    username: ${CANADA_POST_USERNAME:Your_CANADA_POST_USERNAME}
+    password: ${CANADA_POST_PASSWORD:Your_CANADA_POST_PASSWORD}
+    customer-number: ${CANADA_POST_CUSTOMER_NUMBER:Your_CANADA_POST_CUSTOMER_NUMBER}
+    endpoint: ${CANADA_POST_ENDPOINT:https://ct.soa-gw.canadapost.ca/rs/ship/price}
