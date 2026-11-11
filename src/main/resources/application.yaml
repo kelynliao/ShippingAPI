@@ -6,13 +6,14 @@ server:
 carrier-account:
   ups:
     carrier: ${UPS_CARRIER:UPS}
-    endpoint: ${UPS_ENDPOINT:https://onlinetools.ups.com/api/rating/v2403/rate}
+    endpoint: ${UPS_ENDPOINT:https://wwwcie.ups.com}
     clientId: ${UPS_CLIENT_ID:Your_UPS_CLIENT_ID}
     clientSecret: ${UPS_CLIENT_SECRET:Your_UPS_CLIENT_SECRET}
     accountNumber: ${UPS_ACCOUNT_NUMBER:Your_UPS_ACCOUNT_NUMBER}
+    shipperName: ${UPS_Shipper_Name:Your Company Name}
   canada-post:
     carrier: ${CANADA_POST_CARRIER:Canada Post}
     username: ${CANADA_POST_USERNAME:Your_CANADA_POST_USERNAME}
     password: ${CANADA_POST_PASSWORD:Your_CANADA_POST_PASSWORD}
     customer-number: ${CANADA_POST_CUSTOMER_NUMBER:Your_CANADA_POST_CUSTOMER_NUMBER}
-    endpoint: ${CANADA_POST_ENDPOINT:https://ct.soa-gw.canadapost.ca/rs/ship/price}
+    endpoint: ${CANADA_POST_ENDPOINT:https://ct.soa-gw.canadapost.ca}

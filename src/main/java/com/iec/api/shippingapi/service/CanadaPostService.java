@@ -51,7 +51,7 @@ public class CanadaPostService {
                 String basicAuth = Base64.getEncoder().encodeToString(
                                 credentials.getBytes(StandardCharsets.US_ASCII));
 
-                String url = config.endpoint();
+                String url = config.endpoint()+"/rs/ship/price";
 
                 HttpRequest requestToCanadaPost = HttpRequest.newBuilder()
                                 .uri(URI.create(url))

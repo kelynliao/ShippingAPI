@@ -8,6 +8,7 @@ public record UpsAccount(
         String endPoint,
         String clientId,
         String clientSecret,
-        String accountNumber
+        String accountNumber,
+        String shipperName
 )
  {}

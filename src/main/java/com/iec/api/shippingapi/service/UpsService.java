@@ -5,6 +5,7 @@ import com.iec.api.shippingapi.dto.ShippingRateRequest;
 import com.iec.api.shippingapi.model.ups.*;
 import com.iec.api.shippingapi.vo.ShippingRate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.json.JsonMapper;
@@ -26,7 +27,7 @@ import java.util.Map;
 
 @Service("upsService")
 public class UpsService {
-        private final UpsAccount config;
+    private final UpsAccount config;
     private final JsonMapper jsonMapper = JsonMapper.builder()
             .propertyNamingStrategy(PropertyNamingStrategies.UPPER_CAMEL_CASE)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -56,27 +57,33 @@ public class UpsService {
         rateRequest.setRequest(request);
         RateRequestRoot RateRequestRoot = new RateRequestRoot();
         RateRequestRoot.setRateRequest(rateRequest);
+
+        // Shipment
         Shipment shipment = new Shipment();
+
+        // shipTo
         var shipTo = new Ship();
         shipTo.setName(shippingRateRequest.shippingToAddress().firstName()+ " "+shippingRateRequest.shippingToAddress().lastName());
         Address shipToAddress =new Address();
         List<String> addressLines = new ArrayList<>();
         addressLines.add(shippingRateRequest.shippingToAddress().address1());
-        addressLines.add(shippingRateRequest.shippingToAddress().address2());
-        addressLines.add("");
+        if(StringUtils.hasText(shippingRateRequest.shippingToAddress().address2()))
+            addressLines.add(shippingRateRequest.shippingToAddress().address2());
         shipToAddress.setAddressLine(addressLines);
         shipToAddress.setCity(shippingRateRequest.shippingToAddress().city());
         shipToAddress.setStateProvinceCode(shippingRateRequest.shippingToAddress().province());
         shipToAddress.setPostalCode(shippingRateRequest.shippingToAddress().postalCode());
         shipToAddress.setCountryCode(shippingRateRequest.shippingToAddress().countryCode());
         shipTo.setAddress(shipToAddress);
+
+        // shipFrom
         var shipFrom = new Ship();
         shipFrom.setName(shippingRateRequest.shippingFromAddress().firstName()+ " "+shippingRateRequest.shippingFromAddress().lastName());
         Address shipFromAddress =new Address();
         List<String> addressLines2 = new ArrayList<>();
         addressLines2.add(shippingRateRequest.shippingFromAddress().address1());
-        addressLines2.add(shippingRateRequest.shippingFromAddress().address2());
-        addressLines2.add("");
+        if(StringUtils.hasText(shippingRateRequest.shippingToAddress().address2()))
+            addressLines.add(shippingRateRequest.shippingFromAddress().address2());
         shipFromAddress.setAddressLine(addressLines2);
         shipFromAddress.setCity(shippingRateRequest.shippingFromAddress().city());
         shipFromAddress.setStateProvinceCode(shippingRateRequest.shippingFromAddress().province());
@@ -84,22 +91,27 @@ public class UpsService {
         shipFromAddress.setCountryCode(shippingRateRequest.shippingFromAddress().countryCode());
         shipFrom.setAddress(shipFromAddress);
 
+        // shipper
         Shipper shipper = new Shipper();
         shipper.setShipperNumber(config.accountNumber());
-        shipper.setName("NetAdvance Technology Inc");
+        shipper.setName(config.shipperName());
         shipper.setAddress(shipFromAddress);
 
-        var paymentDetails = new PaymentDetails();
+        shipment.setShipper(shipper);
+        shipment.setShipTo(shipTo);
+        shipment.setShipFrom(shipFrom);
+
+        //paymentInformation
+        var paymentInformation = new PaymentInformation();
         var shipmentCharge = new ShipmentCharge();
         var billShipper = new BillShipper();
         billShipper.setAccountNumber(config.accountNumber());
         shipmentCharge.setType("01");
         shipmentCharge.setBillShipper(billShipper);
-        shipment.setShipper(shipper);
-        shipment.setShipTo(shipTo);
-        shipment.setShipFrom(shipFrom);
-        paymentDetails.setShipmentCharge(shipmentCharge);
-        shipment.setPaymentDetails(paymentDetails);
+        paymentInformation.setShipmentCharge(shipmentCharge);
+        shipment.setPaymentInformation(paymentInformation);
+
+
         var packaging = new Package();
         var packagingType = new PackagingType();
         packagingType.setCode("02");
@@ -123,15 +135,16 @@ public class UpsService {
         packaging.setDimensions(dimensions);
         shipment.setPackage(packaging);
         rateRequest.setShipment(shipment);
-        System.out.println(accessToken.getAccessToken());
+        //System.out.println(accessToken.getAccessToken());
         var requestRate = HttpRequest.newBuilder()
-                .uri(URI.create("https://onlinetools.ups.com/api/rating/v1/shop"))
+                .uri(URI.create(config.endPoint()+"/api/rating/v2403/shop"))
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
                 .header("Authorization", "Bearer " + accessToken.getAccessToken())
                 .POST(HttpRequest.BodyPublishers.ofString(
                         jsonMapper.writeValueAsString(RateRequestRoot), StandardCharsets.UTF_8))
                 .build();
+        System.out.println(jsonMapper.writeValueAsString(RateRequestRoot));
         String result = send(requestRate);
 
         var rateResponseRoot = jsonMapper.readValue(result, RateResponseRoot.class);
@@ -147,7 +160,9 @@ public class UpsService {
 
     private AccessToken getToken(String clientId, String clientSecret)
             throws IOException, InterruptedException {
-        var url = "https://onlinetools.ups.com/security/v1/oauth/token";
+
+        // todo: add a cache to reuse access token.
+        var url = config.endPoint()+"/security/v1/oauth/token";
         if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.isBlank()) { throw new IllegalStateException("UPS credentials must be configured"); }
         String basicAuth = Base64.getEncoder().encodeToString(
                 (clientId + ":" + clientSecret).getBytes(StandardCharsets.ISO_8859_1));
@@ -170,7 +185,7 @@ public class UpsService {
         try (HttpClient client = HttpClient.newHttpClient()) {
             var response = client.send(request,
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+           if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new IOException("UPS request failed with HTTP status " + response.statusCode());
             }
             return response.body();

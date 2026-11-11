@@ -13,6 +13,6 @@ public class RatedShipment {
     private ServiceOptionsCharges ServiceOptionsCharges;
     private Service Service;
     private TransportationCharges TransportationCharges;
-    private RatedPackage RatedPackage;
+    private List<RatedPackage> RatedPackage;
 
 }

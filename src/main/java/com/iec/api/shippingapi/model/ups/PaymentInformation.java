@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 //@JSONType(naming = PropertyNamingStrategy.PascalCase)
-public class PaymentDetails {
+public class PaymentInformation {
 
     private ShipmentCharge ShipmentCharge;
 

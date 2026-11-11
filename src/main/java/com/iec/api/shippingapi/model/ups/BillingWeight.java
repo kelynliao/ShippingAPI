@@ -6,6 +6,6 @@ import lombok.Data;
 public class BillingWeight {
 
     private UnitOfMeasurement UnitOfMeasurement;
-    private Integer Weight;
+    private String Weight;
 
 }
